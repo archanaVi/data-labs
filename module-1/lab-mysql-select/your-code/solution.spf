@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>database</key>
+			<string>publications</string>
+			<key>host</key>
+			<string>127.0.0.1</string>
+			<key>kcid</key>
+			<string>-1760857593992439915</string>
+			<key>name</key>
+			<string>localhost</string>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>root</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>utf8</string>
+			<key>contentFilterV2</key>
+			<dict>
+				<key>children</key>
+				<array/>
+				<key>filterClass</key>
+				<string>groupNode</string>
+				<key>isConjunction</key>
+				<true/>
+			</dict>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGJCVYJHZlcnNpb25YJG9iamVjdHNZJGFy
+			Y2hpdmVyVCR0b3ASAAGGoKgHCBMUFRYaIVUkbnVsbNMJCgsMDxJX
+			TlMua2V5c1pOUy5vYmplY3RzViRjbGFzc6INDoACgAOiEBGABIAF
+			gAdUdHlwZVRyb3dzXxAdU2VsZWN0aW9uRGV0YWlsVHlwZU5TSW5k
+			ZXhTZXTSFwsYGVxOU1JhbmdlQ291bnQQAIAG0hscHR5aJGNsYXNz
+			bmFtZVgkY2xhc3Nlc1pOU0luZGV4U2V0oh8gWk5TSW5kZXhTZXRY
+			TlNPYmplY3TSGxwiI1xOU0RpY3Rpb25hcnmiIiBfEA9OU0tleWVk
+			QXJjaGl2ZXLRJidUZGF0YYABAAgAEQAaACMALQAyADcAQABGAE0A
+			VQBgAGcAagBsAG4AcQBzAHUAdwB8AIEAoQCmALMAtQC3ALwAxwDQ
+			ANsA3gDpAPIA9wEEAQcBGQEcASEAAAAAAAACAQAAAAAAAAAoAAAA
+			AAAAAAAAAAAAAAABIw==
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {695, 483}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>
+
+
+#Challenge 1 : right way : we have relationship between the tables and we join them in one table
+select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, t.title as TITLE, p.pub_name as PUBLISHER
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+inner join titles t on t.title_id=ta.title_id
+inner join publishers p on p.pub_id=t.pub_id
+order by a.au_id;
+​
+# Challenge 2
+​
+select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, p.pub_name as PUBLISHER, count(t.title) as TITLE_COUNT
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+inner join titles t on t.title_id=ta.title_id
+inner join publishers p on p.pub_id=t.pub_id
+group by a.au_id, p.pub_id # we need to group by both author_id and publisher to be able to have multiple rows with the same author_id or publisher
+order by a.au_id desc;
+​
+create table challenge2
+as (select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, p.pub_name as PUBLISHER, count(t.title) as TITLE_COUNT
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+inner join titles t on t.title_id=ta.title_id
+inner join publishers p on p.pub_id=t.pub_id
+group by a.au_id, p.pub_id # we need to group by both author_id and publisher to be able to have multiple rows with the same author_id or publisher
+order by a.au_id desc);
+​
+select sum(TITLE_COUNT)
+from challenge2;
+​
+select count(*)
+from titleauthor;
+​
+#challenge3
+select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.title_id) as TOTAL
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.title_id) desc
+limit 3;
+​
+#challenge4
+select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, coalesce(sum(t.ytd_sales),0) as TOTAL
+from authors a
+left join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+group by a.au_id 
+order by sum(t.ytd_sales) desc;</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>214</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>queryHistory</key>
+	<array>
+		<string>select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.title_id) as TOTAL
+from authors a
+left join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.title_id) desc</string>
+		<string>select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.title_id) as TOTAL
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.title_id) desc</string>
+		<string>select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.title_id) as TOTAL
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.title_id) desc
+limit 3</string>
+		<string>select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.title_id) as TOTAL
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.titles_id) desc</string>
+		<string>select  a.au_id as AUTHOR_ID, a.au_lname as LASTNAME, a.au_fname as FIRSTNAME, count(s.titles_id) as TOTAL
+from authors a
+inner join titleauthor ta on a.au_id=ta.au_id
+left join titles t on t.title_id=ta.title_id
+left join sales s on s.title_id=t.title_id
+group by a.au_id 
+order by count(s.titles_id) desc</string>
+		<string>select *
+from employee e
+right join jobs j on e.`job_id`=j.job_id
+union
+select *
+from employee e
+left join jobs j on e.`job_id`=j.job_id</string>
+		<string>select *
+from employee e
+right join jobs j on e.`job_id`=j.job_id;
+union
+select *
+from employee e
+left join jobs j on e.`job_id`=j.job_id</string>
+		<string>select *
+from employee e
+right join jobs j on e.`job_id`=j.job_id</string>
+		<string>select *
+from employee</string>
+		<string>select t.title,sum(qty),t.price,sum(qty)*t.price as revenue,t.type
+from sales s
+right join titles t on t.title_id=s.title_id
+group by t.title_id</string>
+		<string>select t.title,sum(qty),t.price,sum(qty)*t.price as revenue
+from sales s
+right join titles t on t.title_id=s.title_id
+group by t.title_id</string>
+		<string>select t.title,sum(qty),t.price,sum(qty)*t.price as revenue
+from sales s
+inner join titles t on t.title_id=s.title_id
+group by t.title_id</string>
+		<string>select sum(qty),t.title
+from sales s
+inner join titles t on t.title_id=s.title_id
+group by t.title_id</string>
+		<string>select sum(qty),t.title
+from sales s
+inner join titles t on t.title_id=s.title_id
+group by title_id</string>
+		<string>select *
+from sales</string>
+		<string>select pub_name,count(title_id)
+from publishers p
+left join titles t
+on p.pub_id=t.pub_id
+group by p.pub_id</string>
+		<string>select pub_name,count(title_id)
+from publishers
+inner join titles
+on publishers.pub_id=titles.pub_id
+group by titles.pub_id</string>
+		<string>select pub_name,count(title_id)
+from publishers
+inner join titles
+on publishers.pub_id=titles.pub_id</string>
+		<string>select *
+from publishers
+inner join titles
+on publishers.pub_id=titles.pub_id</string>
+		<string>select count(title),`pub_id`
+from titles
+group by pub_id</string>
+	</array>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>8.0.17</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>
